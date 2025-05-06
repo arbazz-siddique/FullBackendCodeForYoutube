@@ -1,5 +1,5 @@
 import geoip from 'geoip-lite';
-import OTP from '../models/OTPModel.js';
+import OTPModel from '../models/OTPModel.js';
 import sendEmailOTP from '../utils/sendEmailOTP.js';
 import sendMobileOTP from '../utils/sendMobileOTP.js';
 
@@ -51,7 +51,7 @@ export const sendOTP = async (req, res) => {
       });
   }
 
-    await OTP.create({ identifier, otp });
+    await OTPModel.create({ identifier, otp });
     console.log("OTP saved to DB");
 
     res.status(200).json({
@@ -78,7 +78,7 @@ export const verifyOTP = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Identifier and OTP are required' });
     }
 
-    const valid = await OTP.findOne({ identifier, otp });
+    const valid = await OTPModel.findOne({ identifier, otp });
 
     if (!valid) {
       return res.status(400).json({
@@ -87,7 +87,7 @@ export const verifyOTP = async (req, res) => {
       });
     }
 
-    await OTP.deleteOne({ _id: valid._id });
+    await OTPModel.deleteOne({ _id: valid._id });
 
     let user;
 
