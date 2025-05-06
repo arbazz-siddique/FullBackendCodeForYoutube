@@ -5,7 +5,7 @@ import cors from "cors";
 import path from "path";
 import { createServer } from "http";
 import { Server } from "socket.io";
-
+import requestIp from 'request-ip';
 // Import routes
 import userroutes from "./Routes/UserRoute.js";
 import videoroutes from "./Routes/VideoRoute.js";
@@ -18,6 +18,8 @@ import locationRoute from "./Routes/location.js";
 dotenv.config({ path: "./config/config.env" });
 
 const app = express();
+app.use(requestIp.mw());
+app.set('trust proxy', true);
 const server = createServer(app);
 
 // Set trust proxy for real IP detection (important for Render)
