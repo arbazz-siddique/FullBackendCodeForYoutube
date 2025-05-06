@@ -1,5 +1,7 @@
-import User from "../models/User.js";
-import Video from "../models/VideofileModel.js";
+
+import User from "../Models/AuthModel.js";
+import video from "../Models/VideofileModel.js"
+
 import fs from "fs";
 import path from "path";
 

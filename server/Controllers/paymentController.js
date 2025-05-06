@@ -1,6 +1,6 @@
 import Razorpay from "razorpay";
 import crypto from "crypto";
-import User from "../models/User.js";
+import User from "../Models/AuthModel.js";
 
 const razorpay = new Razorpay({
     key_id: "YOUR_RAZORPAY_KEY",
