@@ -18,53 +18,34 @@ function getClientIp(req) {
 
 export const sendOTP = async (req, res) => {
   try {
-    const identifier = req.body.identifier;
-    if (!identifier) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Identifier (email/phone) is required' 
-      });
-    }
+    const { identifier } = req.body;
 
-    // Generate OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    
-    // Try to get location, but don't fail if unavailable
-    let region = 'Unknown';
-    try {
-      const ip = req.ip;
-      const geo = geoip.lookup(ip);
-      region = geo?.region || 'Unknown';
-    } catch (geoError) {
-      console.log("Location detection failed, proceeding anyway");
-    }
+    // 1. Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000);
 
-    // Send OTP regardless of location
-    if (/^\+?[1-9]\d{1,14}$/.test(identifier)) {
+    // 2. Send OTP regardless of location
+    if (/^\+?\d+$/.test(identifier)) {
       await sendMobileOTP(identifier, otp);
     } else {
       await sendEmailOTP(identifier, otp);
     }
 
+    // 3. Save OTP (always succeeds)
     await OTPModel.create({ identifier, otp });
 
-    res.status(200).json({
+    res.json({ 
       success: true,
-      message: 'OTP sent successfully',
-      region // Still return detected region if available
+      message: "OTP sent successfully" 
     });
-    
+
   } catch (error) {
-    console.error("Error sending OTP:", error);
+    // 4. Handle only critical errors
     res.status(500).json({
       success: false,
-      message: error.message.includes('identifier') 
-        ? 'Invalid email/phone format' 
-        : 'Failed to send OTP'
+      message: "Failed to send OTP"
     });
   }
 };
-
 
 export const verifyOTP = async (req, res) => {
   try {
