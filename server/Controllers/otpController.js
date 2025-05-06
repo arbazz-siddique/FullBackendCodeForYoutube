@@ -18,53 +18,49 @@ function getClientIp(req) {
 
 export const sendOTP = async (req, res) => {
   try {
-    const ip = getClientIp(req);
-    console.log("Client IP:", ip); 
-
-    const geo = geoip.lookup(ip);
-    console.log("Geo info:", geo); 
-
-    const state = geo?.region || '';
-    console.log("Detected State:", state); 
-
     const identifier = req.body.identifier;
-    console.log("Received Identifier:", identifier); 
-
     if (!identifier) {
-      return res.status(400).json({ success: false, message: 'Identifier (email/phone) is required' });
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Identifier (email/phone) is required' 
+      });
     }
 
+    // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log("Generated OTP:", otp); 
+    
+    // Try to get location, but don't fail if unavailable
+    let region = 'Unknown';
+    try {
+      const ip = req.ip;
+      const geo = geoip.lookup(ip);
+      region = geo?.region || 'Unknown';
+    } catch (geoError) {
+      console.log("Location detection failed, proceeding anyway");
+    }
 
-   
+    // Send OTP regardless of location
     if (/^\+?[1-9]\d{1,14}$/.test(identifier)) {
-      // It's a valid phone number
       await sendMobileOTP(identifier, otp);
-  } else if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)) {
-      // It's a valid email
+    } else {
       await sendEmailOTP(identifier, otp);
-  } else {
-      return res.status(400).json({
-          success: false,
-          message: "Invalid identifier format. Must be a valid email or phone number starting with '+' and country code.",
-      });
-  }
+    }
 
-    await OTP.create({ identifier, otp });
-    console.log("OTP saved to DB");
+    await OTPModel.create({ identifier, otp });
 
     res.status(200).json({
       success: true,
       message: 'OTP sent successfully',
-      region: state,
+      region // Still return detected region if available
     });
+    
   } catch (error) {
-    console.error("Error sending OTP:", error.message);
+    console.error("Error sending OTP:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to send OTP',
-      error: error.message
+      message: error.message.includes('identifier') 
+        ? 'Invalid email/phone format' 
+        : 'Failed to send OTP'
     });
   }
 };
